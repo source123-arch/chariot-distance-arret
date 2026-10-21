@@ -1,0 +1,45 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Un chariot ne s’arrête pas net</title><style>*{box-sizing:border-box}body{margin:0;padding:22px;background:#f7f5f6;color:#231c21;font:16px/1.55 "Segoe UI",Arial,sans-serif}h3{font-size:24px;margin:0 0 12px}p{margin:0 0 10px}.calc{background:white;border:1px solid #e3dce1;border-radius:12px;padding:20px;margin-top:20px;display:grid;gap:16px}.row{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center}label{font-weight:600;font-size:15px}input[type=range]{width:min(320px,100%);accent-color:#AF007C}.seg{display:inline-flex;border:1px solid #e3dce1;border-radius:8px;overflow:hidden}.seg button{border:0;background:#f7f5f6;padding:9px 12px;font-size:14px;cursor:pointer}.seg button[aria-pressed=true]{background:#AF007C;color:white}.big{font-family:Consolas,monospace;font-size:30px;font-weight:700}.track{position:relative;height:46px;background:#f1ecef;border-radius:6px;overflow:hidden}.track .r{position:absolute;left:0;top:0;bottom:0;background:#E7B042}.track .f{position:absolute;top:0;bottom:0;background:#D2767D}.track .ped{position:absolute;top:-2px;bottom:-2px;width:3px;background:#231c21}.ticks{position:relative;height:18px;font:11px Consolas,monospace;color:#665d64}.ticks span{position:absolute;transform:translateX(-50%)}.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:#665d64}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px}.verdict{font-weight:600}.verdict.bad{color:#c0392b}.verdict.ok{color:#2c7d3c}.hint{font-size:13px;color:#665d64}@media(max-width:600px){body{padding:12px}.calc{padding:14px}.seg{flex-wrap:wrap}}</style></head><body><h3 class="sub">Un chariot ne s'arrête pas net</h3>
+  <p style="max-width:70ch;color:var(--muted)">Le cariste met environ une seconde à réagir, puis le chariot freine. Faites varier la vitesse et l'état du sol.</p>
+  <div class="calc">
+    <div class="row">
+      <div>
+        <label for="spd">Vitesse du chariot : <span id="spdv" style="font-family:var(--mono)">10 km/h</span></label><br>
+        <input type="range" id="spd" min="4" max="20" step="1" value="10">
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px">Conditions</div>
+        <div class="seg" role="group" aria-label="Conditions">
+          <button id="c1" aria-pressed="true">Sol sec, à vide</button>
+          <button id="c2" aria-pressed="false">Sol humide ou chargé</button>
+        </div>
+      </div>
+      <div><div class="hint">Distance d'arrêt</div><div class="big" id="dist">4,7 m</div></div>
+    </div>
+    <div>
+      <div class="track" id="track"><div class="r" id="tr"></div><div class="f" id="tf"></div><div class="ped" style="left:12%" title="Piéton à 3 m"></div></div>
+      <div class="ticks" id="ticks"></div>
+    </div>
+    <div class="legend"><span><i style="background:var(--orange)"></i>Distance parcourue pendant la réaction</span><span><i style="background:var(--saumon)"></i>Distance de freinage</span><span><i style="background:var(--fg);width:3px"></i>Piéton qui surgit à 3 m</span></div>
+    <p class="verdict" id="verdict"></p>
+    <p class="hint">Calcul pédagogique : temps de réaction 1 s, décélération 2 m/s² (sec) ou 1,2 m/s² (humide ou chargé). Les valeurs réelles dépendent de l'engin et du sol.</p>
+  </div>
+<script>const $=s=>document.querySelector(s);
+let decel=2.0; const MAXD=25;
+$("#ticks").innerHTML=[0,5,10,15,20,25].map(v=>`<span style="left:${v/MAXD*100}%">${v} m</span>`).join("").replace('left:0%','left:1.5%').replace('left:100%','left:96%');
+document.querySelector(".track .ped").style.left=(3/MAXD*100)+"%";
+function calc(){
+  const v=+$("#spd").value, ms=v/3.6, r=ms*1, f=ms*ms/(2*decel), t=r+f;
+  $("#spdv").textContent=v+" km/h";
+  $("#dist").textContent=t.toFixed(1).replace(".",",")+" m";
+  $("#tr").style.width=Math.min(r/MAXD*100,100)+"%";
+  $("#tf").style.left=Math.min(r/MAXD*100,100)+"%"; $("#tf").style.width=Math.min(f/MAXD*100,100-r/MAXD*100)+"%";
+  const vd=$("#verdict");
+  if(r>3){vd.className="verdict bad";vd.textContent=`À ${v} km/h, le chariot parcourt ${r.toFixed(1).replace(".",",")} m avant même que le cariste ne freine : le piéton à 3 m est percuté à pleine vitesse.`}
+  else if(t>3){vd.className="verdict bad";vd.textContent=`Le chariot a besoin de ${t.toFixed(1).replace(".",",")} m pour s'arrêter : le piéton qui surgit à 3 m est percuté.`}
+  else{vd.className="verdict ok";vd.textContent=`Le chariot s'arrête en ${t.toFixed(1).replace(".",",")} m, juste avant le piéton. Une marge très faible.`}
+}
+$("#spd").addEventListener("input",calc);
+[["#c1",2.0],["#c2",1.2]].forEach(([id,a])=>$(id).addEventListener("click",()=>{decel=a;$("#c1").setAttribute("aria-pressed",a===2.0);$("#c2").setAttribute("aria-pressed",a===1.2);calc();}));
+calc();
+
+</script></body></html>
